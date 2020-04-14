@@ -4,10 +4,14 @@ import com.ycq.handler.ServerReceiveHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 
 import java.net.InetSocketAddress;
 
@@ -48,13 +52,15 @@ public class NettyServer {
                     .localAddress(new InetSocketAddress(port))  // 指定端口
                     .childHandler(new ChannelInitializer<SocketChannel>() {  // 添加初始化类
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
-                            socketChannel.pipeline().addLast(new ServerReceiveHandler())
-                                    .addLast(new StringDecoder());  // 初始化类中添加自定义消息处理器
+                            socketChannel.pipeline()
+                                    .addLast(new DelimiterBasedFrameDecoder(4096, Delimiters.lineDelimiter()))
+                                    .addLast(new StringDecoder())
+                                    .addLast(new StringEncoder())
+                                    .addLast(new ServerReceiveHandler());
                         }
                     });
 
             ChannelFuture channelFuture = serverbootstrap.bind().sync();  // 等阻塞直到服务器绑定成功
-            System.out.println("服务器启动成功, 绑定端口: " + port);
             channelFuture.channel().closeFuture().sync();  // 阻塞直到channel关闭
 
         } finally {

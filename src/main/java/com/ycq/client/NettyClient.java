@@ -2,16 +2,22 @@ package com.ycq.client;
 
 import com.ycq.handler.ClientReceiveHandler;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import io.netty.handler.codec.Delimiters;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
+import java.text.StringCharacterIterator;
+import java.util.Scanner;
 
 
 /**
@@ -32,11 +38,11 @@ public class NettyClient {
         this.port = port;
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
         new NettyClient("127.0.0.1", 8888).start();
     }
 
-    private void start() throws InterruptedException {
+    private void start() throws InterruptedException, IOException {
 
         // 创建EventLoopGroup
         EventLoopGroup group = new NioEventLoopGroup();
@@ -51,13 +57,23 @@ public class NettyClient {
                     .remoteAddress(new InetSocketAddress(ip, port))  // 指定ip, port
                     .handler(new ChannelInitializer<SocketChannel>() {  // 添加初始化类
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
-                            socketChannel.pipeline().addLast(new ClientReceiveHandler()); // 初始化类中添加自定义消息处理器
+                            socketChannel.pipeline()
+                                    .addLast(new DelimiterBasedFrameDecoder(4096, Delimiters.lineDelimiter()))
+                                    .addLast(new StringEncoder())
+                                    .addLast(new StringDecoder())
+                                    .addLast(new ClientReceiveHandler());
                         }
                     });
 
             ChannelFuture channelFuture = bootstrap.connect().sync();  // 阻塞直到连接到服务器
-            System.out.println("连接到服务器成功, 服务器ip: " + ip + ", 端口: " + port);
-            channelFuture.channel().closeFuture().sync();  // 阻塞直到channel关闭
+            Channel channel = channelFuture.channel();
+
+            Scanner scanner = new Scanner(System.in);
+
+            while(scanner.hasNextLine()){
+                String nextLine = scanner.nextLine();
+                channel.writeAndFlush(nextLine + "\r\n");
+            }
 
         } finally {
             group.shutdownGracefully().sync();  // 释放资源
