@@ -14,9 +14,7 @@ import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.text.StringCharacterIterator;
 import java.util.Scanner;
 
 
@@ -38,11 +36,11 @@ public class NettyClient {
         this.port = port;
     }
 
-    public static void main(String[] args) throws InterruptedException, IOException {
+    public static void main(String[] args) throws InterruptedException {
         new NettyClient("127.0.0.1", 8888).start();
     }
 
-    private void start() throws InterruptedException, IOException {
+    private void start() throws InterruptedException {
 
         // 创建EventLoopGroup
         EventLoopGroup group = new NioEventLoopGroup();
@@ -56,7 +54,7 @@ public class NettyClient {
                     .channel(NioSocketChannel.class)  // 使用nio的channel
                     .remoteAddress(new InetSocketAddress(ip, port))  // 指定ip, port
                     .handler(new ChannelInitializer<SocketChannel>() {  // 添加初始化类
-                        protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        protected void initChannel(SocketChannel socketChannel) {
                             socketChannel.pipeline()
                                     .addLast(new DelimiterBasedFrameDecoder(4096, Delimiters.lineDelimiter()))
                                     .addLast(new StringEncoder())

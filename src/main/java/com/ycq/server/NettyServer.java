@@ -4,7 +4,6 @@ import com.ycq.handler.ServerReceiveHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -51,7 +50,7 @@ public class NettyServer {
                     .channel(NioServerSocketChannel.class)  // 使用nio的channel
                     .localAddress(new InetSocketAddress(port))  // 指定端口
                     .childHandler(new ChannelInitializer<SocketChannel>() {  // 添加初始化类
-                        protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        protected void initChannel(SocketChannel socketChannel) {
                             socketChannel.pipeline()
                                     .addLast(new DelimiterBasedFrameDecoder(4096, Delimiters.lineDelimiter()))
                                     .addLast(new StringDecoder())
@@ -62,7 +61,6 @@ public class NettyServer {
 
             ChannelFuture channelFuture = serverbootstrap.bind().sync();  // 等阻塞直到服务器绑定成功
             channelFuture.channel().closeFuture().sync();  // 阻塞直到channel关闭
-
         } finally {
             bossGroup.shutdownGracefully().sync();  // 释放资源
             workGroup.shutdownGracefully().sync();  // 释放资源
