@@ -25,13 +25,12 @@ public class ServerReceiveHandler extends SimpleChannelInboundHandler<String> {
 
     private static ChannelGroup channelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
-
     // 服务器收到客户端连接时
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
         Channel channel = ctx.channel();
         SocketAddress socketAddress = channel.remoteAddress();
-        // 把新channel添加到group中
+        // 把新channel添加到group和map中
         channelGroup.add(channel);
         // 通知其他channel新的客户端加入
         for (Channel oldChannel : channelGroup) {
@@ -59,7 +58,7 @@ public class ServerReceiveHandler extends SimpleChannelInboundHandler<String> {
     // 服务器收到客户端的请求 在各个客户端进行转发
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, String s) {
         Channel channel = channelHandlerContext.channel();
-        // 当一个客户端发来消息, 遍历group中所有channel
+        // 群聊时, 当一个客户端发来消息, 遍历group中所有channel
         for (Channel oldChannel : channelGroup) {
             // 转发消息回当前客户端, 前缀显示"自己"
             if (channel == oldChannel){
@@ -73,7 +72,7 @@ public class ServerReceiveHandler extends SimpleChannelInboundHandler<String> {
 
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) { // (5)
+    public void channelActive(ChannelHandlerContext ctx) {
         Channel channel = ctx.channel();
         System.out.println(channel.remoteAddress() + "在线");
     }

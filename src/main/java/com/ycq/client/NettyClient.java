@@ -73,6 +73,7 @@ public class NettyClient {
                 channel.writeAndFlush(nextLine + "\r\n");
             }
 
+
         } finally {
             group.shutdownGracefully().sync();  // 释放资源
         }
